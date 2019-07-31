@@ -366,8 +366,6 @@ class SimulateSFP(object):
     for i in range(m_fix):
       for c1 in list(string.ascii_lowercase) + ['.', '#', '/', '\'', '$']:
         for c2 in list(string.ascii_lowercase) + ['.', '#', '/', '\'', '$']:
-          # for c1 in ['a']:
-          #   for c2 in ['a']:
           curr_string = str(i) + c1 + c2
           all_strings.append(curr_string)
 
