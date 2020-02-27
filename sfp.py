@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2019 The Federated Heavy Hitters Neurips2019 Authors.
+# Copyright 2020 The Federated Heavy Hitters AISTATS 2020 Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,17 +43,13 @@ import scipy.stats
 
 class SimulateSFP(object):
   """Simulation for SFP."""
-
-  def __init__(self, max_k=300, max_word_len=10, epsilon=4, delta=1e-5):
+  def __init__(self, max_word_len=10, epsilon=4.0, delta = 2.3e-12, num_runs=5):
     self.max_word_len = max_word_len
     self.l_range = range(0, 9, 2)
     self.half_l = int(self.max_word_len / 2)
     self.epsilon = epsilon
     self.delta = delta
-    # confidence interval for F1 score calculation
-    self.confidence = .95
-    # maximum value at which F1 score is calculated
-    self.max_k = max_k
+    self.num_runs = num_runs
     self._load_clients_and_ground_truth()
     # size of hash functions used
     self.m = 1024
@@ -87,11 +83,9 @@ class SimulateSFP(object):
     return sol.x[0]
 
   def _load_clients_and_ground_truth(self):
-    """Load client words and ground truth frequencies."""
+    """Load client words. """
     with open('clients_sfp.txt', 'rb') as fp:
       self.clients = pickle.load(fp)
-    with open('word_frequencies.txt', 'rb') as fp:
-      self.true_frequencies = pickle.load(fp)
 
     self.client_num = len(self.clients)
     print('client number', self.client_num)
@@ -362,10 +356,10 @@ class SimulateSFP(object):
     print('SKETCHING TIME', end_time - start_time)
     # Create all possible strings, total#: 256*26*26 n
     all_strings = []
-
+    extra_symbols = ['@', '#', '-', ';', '(', ')', '*', ':', '.', '\'', '/', '+', '$']
     for i in range(m_fix):
-      for c1 in list(string.ascii_lowercase) + ['.', '#', '/', '\'', '$']:
-        for c2 in list(string.ascii_lowercase) + ['.', '#', '/', '\'', '$']:
+      for c1 in list(string.ascii_lowercase) + extra_symbols:
+        for c2 in list(string.ascii_lowercase) + extra_symbols:
           curr_string = str(i) + c1 + c2
           all_strings.append(curr_string)
 
@@ -408,50 +402,17 @@ class SimulateSFP(object):
         all_heavy_hitters.add(heavy_hitter)
     return list(all_heavy_hitters)
 
-  def get_mean_u_l(self, recall_values):
-    """Compute average recall values and confidence intervals."""
-    data_mean = []
-    ub = []
-    lb = []
-    for recall_k in range(10, self.max_k):
-      curr_mean = np.mean(recall_values[recall_k])
-      data_mean.append(curr_mean)
-      n = len(recall_values[recall_k])
-      std_err = scipy.stats.sem(recall_values[recall_k])
-      h = std_err * scipy.stats.t.ppf((1 + self.confidence) / 2, n - 1)
-      lb.append(curr_mean - h)
-      ub.append(curr_mean + h)
-    mean_u_l = [data_mean, ub, lb]
-    return mean_u_l
-
-  def get_f1_scores(self):
-    """Get F1 scores."""
-    sorted_all = collections.OrderedDict(
-        sorted(self.true_frequencies.items(), key=lambda x: x[1], reverse=True))
-    top_words = list(sorted_all.keys())[:self.max_k]
-
-    recall_k_values = np.arange(10, self.max_k, 1)
-
-    f1_scores = {}
-    for recall_k in recall_k_values:
-      f1_scores[recall_k] = []
-
-    # increase range to run SFP multiple times and average Recall over many runs
-    for _ in range(1):
+  def get_heavy_hitters(self):
+    heavy_hitters = []
+    for run in range(self.num_runs):
       encoded_vectors, hash_function_indexes, l = self.encode_strings_2chars(
           self.clients, self.k, self.m, self.h, self.leps)
-      heavy_hitters = self.get_heavy_hitters_parallel(encoded_vectors,
+      results = self.get_heavy_hitters_parallel(encoded_vectors,
                                                       hash_function_indexes, l,
                                                       self.t, self.epsilon,
                                                       self.k, self.m, self.h,
                                                       self.client_num)
-
-      for recall_k in recall_k_values:
-        recall = 0
-        for i in range(recall_k):
-          if top_words[i] in heavy_hitters:
-            recall += 1
-        recall = recall * 1.0 / recall_k
-        f1_scores[recall_k].append(2 * recall / (recall + 1))
-    f1_scores_with_confidence = self.get_mean_u_l(f1_scores)
-    return f1_scores_with_confidence
+      print(f'Discovered {len(results)} heavy hitters in run #{run+1}')
+      print(results)
+      heavy_hitters.append(results)
+    return heavy_hitters

@@ -1,4 +1,4 @@
-# Copyright 2019 The Federated Heavy Hitters Neurips2019 Authors.
+# Copyright 2020 The Federated Heavy Hitters AISTATS 2020 Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,5 @@ unzip trainingandtestdata.zip
 
 virtualenv -p python3 .
 
-pip install -r requirements.txt
 python3 -m preprocess
 python3 -m main
