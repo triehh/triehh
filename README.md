@@ -1,4 +1,4 @@
-This code implements the Sequence Frequency Puzzle (SFP) algorithm, described in detail in [Apple's paper](https://machinelearning.apple.com/docs/learning-with-privacy-at-scale/appledifferentialprivacysystem.pdf), and the Trie Heavy Hitters (TrieHH) algorithm described in Algorithm 1 of our AISTATS 2020 submission. 
+This code implements the Sequence Frequency Puzzle (SFP) algorithm, described in detail in [Apple's paper](https://machinelearning.apple.com/research/learning-with-privacy-at-scale), and the Trie Heavy Hitters (TrieHH) algorithm described in Algorithm 1 of our AISTATS 2020 submission. 
 
 To run simulations, load a terminal and run `run.sh`. The script will download Sentiment140 [from here](https://docs.google.com/file/d/0B04GJPshIjmPRnZManQwWEdTZjg/edit), run `preprocess.py` to preprocess the dataset, and then run `main.py` to generate the F1 score plot that compares the performance of SFP and TrieHH. You can change the parameters in `main.py` if you would like to try different privacy parameters.
 
